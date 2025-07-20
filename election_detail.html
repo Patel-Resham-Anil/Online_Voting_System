@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}{{ election.title }} - Online Voting System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item active">{{ election.title }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">
+                    <i class="fas fa-vote-yea me-2"></i>{{ election.title }}
+                </h3>
+            </div>
+            <div class="card-body">
+                <p class="lead">{{ election.description }}</p>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <i class="fas fa-calendar-alt me-2 text-primary"></i>
+                            <strong>Start Date:</strong> {{ election.start_date.strftime('%Y-%m-%d %H:%M') }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <i class="fas fa-calendar-check me-2 text-success"></i>
+                            <strong>End Date:</strong> {{ election.end_date.strftime('%Y-%m-%d %H:%M') }}
+                        </div>
+                    </div>
+                </div>
+                
+                {% if now < election.start_date %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-clock me-2"></i>
+                        <strong>Election not started yet.</strong> Voting will begin on {{ election.start_date.strftime('%Y-%m-%d %H:%M') }}.
+                    </div>
+                {% elif now > election.end_date %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-times-circle me-2"></i>
+                        <strong>Election has ended.</strong> Voting closed on {{ election.end_date.strftime('%Y-%m-%d %H:%M') }}.
+                    </div>
+                {% else %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Election is active!</strong> You can cast your vote now.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if has_voted %}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-check me-2"></i>
+                <strong>You have already voted in this election.</strong> Thank you for participating!
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<div class="row">
+    <div class="col-12">
+        <h4 class="mb-4">
+            <i class="fas fa-users me-2"></i>Candidates
+        </h4>
+    </div>
+</div>
+
+<div class="row" id="candidates-container">
+    {% for candidate in election.candidates %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card candidate-card h-100" data-candidate-id="{{ candidate.id }}">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-user-tie fa-3x text-primary"></i>
+                    </div>
+                    <h5 class="card-title">{{ candidate.name }}</h5>
+                    <p class="card-text text-muted">{{ candidate.description or 'No description available.' }}</p>
+                    
+                    {% if not has_voted and now >= election.start_date and now <= election.end_date %}
+                        <button class="btn btn-primary vote-btn" data-candidate-id="{{ candidate.id }}">
+                            <i class="fas fa-vote-yea me-2"></i>Vote for {{ candidate.name }}
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+{% if election.candidates %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Live Results
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="results-container">
+                        {% for candidate in election.candidates %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="fw-bold">{{ candidate.name }}</span>
+                                    <span class="vote-count" data-candidate-id="{{ candidate.id }}">0</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: 0%" 
+                                         data-candidate-id="{{ candidate.id }}">0%</div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <div class="mt-3">
+                            <strong>Total Votes: </strong><span id="total-votes">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% if current_user.is_admin %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cog me-2"></i>Admin Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-2">
+                            <a href="{{ url_for('manage_candidates', election_id=election.id) }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-users me-2"></i>Manage Candidates
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <a href="{{ url_for('election_results', election_id=election.id) }}" class="btn btn-outline-success w-100">
+                                <i class="fas fa-chart-pie me-2"></i>View Results
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript">
+    // Socket.IO connection
+    const socket = io();
+    
+    // Join election room for real-time updates
+    socket.emit('join_election', { election_id: '{{ election.id }}' });
+    
+    // Handle vote button clicks
+    document.querySelectorAll('.vote-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const candidateId = this.getAttribute('data-candidate-id');
+            const candidateName = this.textContent.replace('Vote for ', '').trim();
+            
+            if (confirm(`Are you sure you want to vote for ${candidateName}? This action cannot be undone.`)) {
+                fetch(`/vote/{{ election.id }}/${candidateId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Vote cast successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while casting your vote.');
+                });
+            }
+        });
+    });
+    
+    // Handle real-time vote updates
+    socket.on('vote_update', function(data) {
+        if (data.election_id == '{{ election.id }}') {
+            updateResults();
+        }
+    });
+    
+    // Function to update results
+    function updateResults() {
+        fetch(`/api/election/{{ election.id }}/results`)
+            .then(response => response.json())
+            .then(data => {
+                let totalVotes = 0;
+                // Calculate total votes
+                for (let candidateName in data) {
+                    totalVotes += data[candidateName];
+                }
+                // Update vote counts and progress bars
+                document.querySelectorAll('.vote-count').forEach(element => {
+                    const candidateId = element.getAttribute('data-candidate-id');
+                    // Find candidate name from the DOM
+                    const card = element.closest('.mb-3');
+                    let candidateName = '';
+                    if (card) {
+                        const label = card.querySelector('.fw-bold');
+                        if (label) candidateName = label.textContent.trim();
+                    }
+                    if (data[candidateName] !== undefined) {
+                        element.textContent = data[candidateName];
+                        // Update progress bar
+                        const progressBar = document.querySelector(`.progress-bar[data-candidate-id="${candidateId}"]`);
+                        if (progressBar && totalVotes > 0) {
+                            const percentage = Math.round((data[candidateName] / totalVotes) * 100);
+                            progressBar.style.width = percentage + '%';
+                            progressBar.textContent = percentage + '%';
+                        } else if (progressBar) {
+                            progressBar.style.width = '0%';
+                            progressBar.textContent = '0%';
+                        }
+                    }
+                });
+                // Update total votes
+                document.getElementById('total-votes').textContent = totalVotes;
+            })
+            .catch(error => {
+                console.error('Error updating results:', error);
+            });
+    }
+    
+    // Update results on page load
+    updateResults();
+    
+    // Update results every 30 seconds
+    setInterval(updateResults, 30000);
+</script>
+{% endblock %} 

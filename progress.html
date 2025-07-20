@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+
+{% block title %}Voting Progress - NeuroVote{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Progress Page Specific Styles */
+    .progress-container {
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+        min-height: calc(100vh - 200px);
+        padding: 20px;
+    }
+
+    .progress-header {
+        margin-bottom: 30px;
+        padding: 25px;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        text-align: center;
+    }
+
+    .progress-title {
+        font-family: 'Algerian', serif;
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: #ffffff;
+        text-shadow: 0 0 30px rgba(0, 212, 255, 0.8);
+        margin: 0;
+        letter-spacing: 3px;
+    }
+
+    .progress-subtitle {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.8);
+        margin-top: 10px;
+        letter-spacing: 1px;
+    }
+
+    /* Statistics Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 25px;
+        text-align: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #00d4ff, #007bff, #00d4ff);
+        background-size: 200% 100%;
+        animation: gradientShift 3s ease infinite;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0, 212, 255, 0.2);
+        border-color: rgba(0, 212, 255, 0.3);
+    }
+
+    .stat-number {
+        font-family: 'Algerian', serif;
+        font-size: 3rem;
+        font-weight: 900;
+        color: #00d4ff;
+        text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        margin-bottom: 10px;
+    }
+
+    .stat-label {
+        font-family: 'Orbitron', monospace;
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.9);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .stat-icon {
+        font-size: 2rem;
+        color: rgba(0, 212, 255, 0.7);
+        margin-bottom: 15px;
+    }
+
+    /* Progress Bar */
+    .progress-section {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+
+    .section-title {
+        font-family: 'Algerian', serif;
+        font-size: 1.5rem;
+        font-weight: 900;
+        color: #ffffff;
+        margin-bottom: 20px;
+        text-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+    }
+
+    .progress-bar-container {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 25px;
+        height: 30px;
+        margin: 15px 0;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(45deg, #00d4ff, #007bff);
+        border-radius: 25px;
+        transition: width 1s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .progress-bar-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+
+    .progress-text {
+        font-family: 'Orbitron', monospace;
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-top: 10px;
+        text-align: center;
+    }
+
+    /* Election Lists */
+    .election-list {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    .election-item {
+        padding: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.3s ease;
+    }
+
+    .election-item:hover {
+        background: rgba(0, 212, 255, 0.1);
+        transform: translateX(5px);
+    }
+
+    .election-item:last-child {
+        border-bottom: none;
+    }
+
+    .election-info h4 {
+        font-family: 'Algerian', serif;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0 0 5px 0;
+        font-size: 1.2rem;
+    }
+
+    .election-meta {
+        font-family: 'Orbitron', monospace;
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .election-status {
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-family: 'Orbitron', monospace;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-voted {
+        background: rgba(40, 167, 69, 0.2);
+        color: #28a745;
+        border: 1px solid rgba(40, 167, 69, 0.3);
+    }
+
+    .status-active {
+        background: rgba(0, 212, 255, 0.2);
+        color: #00d4ff;
+        border: 1px solid rgba(0, 212, 255, 0.3);
+    }
+
+    .status-ended {
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 50px 20px;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: rgba(0, 212, 255, 0.3);
+        margin-bottom: 20px;
+    }
+
+    .empty-state h3 {
+        font-family: 'Algerian', serif;
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+    }
+
+    .empty-state p {
+        font-family: 'Orbitron', monospace;
+        font-size: 1rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .progress-title {
+            font-size: 2rem;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="progress-container">
+    <div class="progress-header">
+        <h1 class="progress-title">VOTING PROGRESS</h1>
+        <p class="progress-subtitle">Track your democratic participation journey</p>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-vote-yea"></i>
+            </div>
+            <div class="stat-number">{{ total_votes_cast }}</div>
+            <div class="stat-label">Votes Cast</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-poll"></i>
+            </div>
+            <div class="stat-number">{{ total_elections }}</div>
+            <div class="stat-label">Total Elections</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-number">{{ "%.1f"|format(participation_rate) }}%</div>
+            <div class="stat-label">Participation Rate</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-number">{{ active_elections|length }}</div>
+            <div class="stat-label">Active Elections</div>
+        </div>
+    </div>
+
+    <!-- Participation Progress -->
+    <div class="progress-section">
+        <h3 class="section-title">PARTICIPATION PROGRESS</h3>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" style="width: {{ participation_rate }}%"></div>
+        </div>
+        <div class="progress-text">
+            You have participated in {{ participated_elections|length }} out of {{ total_elections }} elections
+        </div>
+    </div>
+
+    <!-- Participated Elections -->
+    <div class="progress-section">
+        <h3 class="section-title">ELECTIONS YOU'VE PARTICIPATED IN</h3>
+        {% if participated_elections %}
+        <div class="election-list">
+            {% for election in participated_elections %}
+            <div class="election-item">
+                <div class="election-info">
+                    <h4>{{ election.title }}</h4>
+                    <div class="election-meta">
+                        Voted on: {{ election_vote_times[election.id].strftime('%Y-%m-%d %H:%M') }}
+                    </div>
+                </div>
+                <div class="election-status status-voted">
+                    <i class="fas fa-check"></i> Voted
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <h3>No Elections Participated</h3>
+            <p>You haven't participated in any elections yet. Start voting to see your progress here!</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Active Elections -->
+    {% if active_elections %}
+    <div class="progress-section">
+        <h3 class="section-title">ACTIVE ELECTIONS</h3>
+        <div class="election-list">
+            {% for election in active_elections %}
+            <div class="election-item">
+                <div class="election-info">
+                    <h4>{{ election.title }}</h4>
+                    <div class="election-meta">
+                        Ends: {{ election.end_date.strftime('%Y-%m-%d %H:%M') }}
+                    </div>
+                </div>
+                <div class="election-status status-active">
+                    <i class="fas fa-play"></i> Active
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 
