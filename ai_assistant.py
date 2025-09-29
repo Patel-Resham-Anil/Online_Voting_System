@@ -215,6 +215,11 @@ IMPORTANT GUIDELINES:
         # General greetings and casual conversation
         if any(word in message for word in ["hello", "hi", "hey", "good morning", "good afternoon", "good evening", "how are you"]):
             return "Hello! 👋 I'm your AI assistant for NeuroVote. How can I help you today? I can assist with voting, registration, or just chat about anything!"
+
+         if any(word in message for word in ["hello", "hi", "hey", "good morning", "good afternoon", "good evening", "how are you"]):
+            return "Hello! 👋 I'm your AI assistant for NeuroVote.How can in help you.
+
+
         
         # Thank you responses
         if any(word in message for word in ["thank you", "thanks", "appreciate", "grateful"]):
@@ -234,3 +239,4 @@ def get_ai_response(user_message: str, context: Optional[Dict] = None) -> str:
     """Global function to get AI response"""
 
     return ai_assistant.get_response(user_message, context) 
+
