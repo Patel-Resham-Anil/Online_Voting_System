@@ -207,7 +207,10 @@ IMPORTANT GUIDELINES:
         # Security responses
         if any(word in message for word in ["secure", "safe", "privacy", "encryption"]):
             return "Security Features: 🔐 Advanced encryption, 🔒 Anonymous voting, 🛡️ Blockchain verification, 🔍 Audit trails, 🚫 No vote modification. Your vote is completely secure!"
-        
+
+         if any(word in message for word in ["secur", "saf", "privac", "encryption"]):
+            return "Security Features: 🔐 Advanced encryption, 🔒 Anonymous votiing
+            🛡️ Blockchain verification, 🔍 Audit trails, 🚫 No vote modification. Your vote is completely secure!"
         # Help responses
         if any(word in message for word in ["help", "support", "assist","hlp","Help",]):
             return "I'm your AI voting assistant! I can help with: Registration, Voting process, Security, Election info, Technical support. What do you need help with?"
@@ -239,4 +242,5 @@ def get_ai_response(user_message: str, context: Optional[Dict] = None) -> str:
     """Global function to get AI response"""
 
     return ai_assistant.get_response(user_message, context) 
+
 
